@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมเปิดแผ่นป้าย - 8 ข้อ</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    h1 {
+      color: #333;
+    }
+    table {
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    td {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #333;
+      text-align: center;
+      cursor: pointer;
+      background-color: #666;
+      position: relative;
+      transition: background-color 0.3s;
+    }
+    td.revealed {
+      background-color: #fff;
+    }
+    td.revealed canvas {
+      width: 100%;
+      height: 100%;
+    }
+    td .number {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    #answer {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+    #originalImage {
+      max-width: 300px;
+      max-height: 300px;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>เกมเปิดแผ่นป้าย - ข้อ <span id="currentQuestion">1</span>/8</h1>
+  <table id="gameBoard"></table>
+  <div>
+    <button onclick="previousQuestion()" id="prevBtn">ย้อนกลับ</button>
+    <button onclick="revealAnswer()">เฉลย</button>
+    <button onclick="nextQuestion()" id="nextBtn">ถัดไป</button>
+    <button onclick="resetGame()">เริ่มใหม่</button>
+  </div>
+  <p id="answer"></p>
+  <img id="originalImage" src="" alt="ภาพต้นฉบับ">
+
+  <script>
+    const images = [
+      { name: 'สุดสาคร', url: 'img/img1.png' },
+      { name: 'พระอภัยมณี', url: 'img/img2.png' },
+      { name: 'นางเงือก', url: 'img/img3.png' },
+      { name: 'สินสมุทร', url: 'img/img4.png' },
+      { name: 'ชีเปลือย', url: 'img/img5.png' },
+      { name: 'ม้านิลมังกร', url: 'img/img6.png' },
+      { name: 'ผีเสื้อสมุทร', url: 'img/img7.png' },
+      { name: 'พระฤาษี', url: 'img/img8.png' },
+    ];
+    let selectedImage = null;
+    let revealed = Array(25).fill(false);
+    let imageParts = [];
+    let currentQuestion = 0;
+    const totalQuestions = 8;
+
+    function initializeBoard() {
+      revealed = Array(25).fill(false);
+      imageParts = [];
+      document.getElementById('answer').innerText = '';
+      document.getElementById('originalImage').style.display = 'none';
+      document.getElementById('currentQuestion').innerText = currentQuestion + 1;
+      document.getElementById('prevBtn').disabled = currentQuestion === 0;
+      document.getElementById('nextBtn').disabled = currentQuestion === totalQuestions - 1;
+
+      const table = document.getElementById('gameBoard');
+      table.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const row = table.insertRow();
+        for (let j = 0; j < 5; j++) {
+          const cell = row.insertCell();
+          const index = i * 5 + j;
+          cell.onclick = () => handleCardClick(index);
+          cell.innerHTML = `<canvas width="60" height="60"></canvas><div class="number">${index + 1}</div>`;
+        }
+      }
+
+      selectedImage = images[currentQuestion];
+      const img = new Image();
+      img.onload = () => {
+        const tileWidth = img.width / 5;
+        const tileHeight = img.height / 5;
+        for (let i = 0; i < 5; i++) {
+          for (let j = 0; j < 5; j++) {
+            const canvas = document.createElement('canvas');
+            canvas.width = tileWidth;
+            canvas.height = tileHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, j * tileWidth, i * tileHeight, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+            imageParts.push(canvas);
+          }
+        }
+        updateBoard();
+      };
+      img.onerror = () => {
+        alert('ไม่สามารถโหลดภาพได้ กรุณาตรวจสอบ path ภาพในโฟลเดอร์ images');
+        selectedImage = images[0];
+        img.src = selectedImage.url;
+      };
+      img.src = selectedImage.url;
+    }
+
+    function updateBoard() {
+      const table = document.getElementById('gameBoard');
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+          const index = i * 5 + j;
+          const cell = table.rows[i].cells[j];
+          const canvas = cell.querySelector('canvas');
+          const number = cell.querySelector('.number');
+          if (revealed[index]) {
+            cell.classList.add('revealed');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(imageParts[index], 0, 0, canvas.width, canvas.height);
+            number.style.display = 'none';
+          } else {
+            cell.classList.remove('revealed');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            number.style.display = 'block';
+          }
+        }
+      }
+    }
+
+    function handleCardClick(index) {
+      if (!revealed[index]) {
+        revealed[index] = true;
+        updateBoard();
+      }
+    }
+
+    function revealAnswer() {
+      document.getElementById('answer').innerText = `เฉลย: ภาพนี้คือ ${selectedImage.name}`;
+      const originalImage = document.getElementById('originalImage');
+      originalImage.src = selectedImage.url;
+      originalImage.style.display = 'block';
+    }
+
+    function previousQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        initializeBoard();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestion < totalQuestions - 1) {
+        currentQuestion++;
+        initializeBoard();
+      }
+    }
+
+    function resetGame() {
+      currentQuestion = 0;
+      initializeBoard();
+    }
+
+    window.onload = initializeBoard;
+  </script>
+</body>
+</html>

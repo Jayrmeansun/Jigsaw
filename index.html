@@ -121,7 +121,7 @@
   </style>
 </head>
 <body>
-  <h1>เกมเปิดแผ่นป้าย - ข้อ <span id="currentQuestion">1</span>/8</h1>
+  <h1>เกมเปิดแผ่นป้าย - ข้อ <span id="currentQuestion">1</span>/10</h1>
   <table id="gameBoard"></table>
   <div>
     <button onclick="previousQuestion()" id="prevBtn">ย้อนกลับ</button>
@@ -142,12 +142,14 @@
       { name: 'ม้านิลมังกร', url: 'img/img6.png' },
       { name: 'ผีเสื้อสมุทร', url: 'img/img7.png' },
       { name: 'พระฤาษี', url: 'img/img8.png' },
+      { name: 'สุนทรภู่', url: 'img/img9.png' },
+      { name: 'ครูต้นไผ่', url: 'img/img10.png' },
     ];
     let selectedImage = null;
     let revealed = Array(25).fill(false);
     let imageParts = [];
     let currentQuestion = 0;
-    const totalQuestions = 8;
+    const totalQuestions = 10;
 
     function initializeBoard() {
       revealed = Array(25).fill(false);
